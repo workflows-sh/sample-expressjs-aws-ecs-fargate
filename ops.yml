@@ -1,25 +1,25 @@
 version: '2'
 pipelines:
-  - name: build-sample-app:0.4.4
+  - name: sample-app-aws-ecs-fargate:0.1.1
     description: build sample application
     env:
       static:
-        - DOCKER_REGISTRY=ghcr.io
-        - STACK_TYPE=aws-ecs-fargate
-        - ORG=workflows-sh
-        - REPO=sample-expressjs-aws-ecs-fargate
-        - REF=CUSTOM
         - AWS_REGION=us-west-1
+        - DOCKER_REGISTRY=ghcr.io
+        - ORG=workflows-sh
+        - REF=CUSTOM
+        - REPO=sample-expressjs-aws-ecs-fargate
+        - STACK_TYPE=aws-ecs-fargate
       secrets:
-        - GITHUB_TOKEN
         - AWS_ACCESS_KEY_ID
-        - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
+        - AWS_SECRET_ACCESS_KEY
+        - GITHUB_TOKEN
     events:
       - 'github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.opened'
       - 'github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.reopened'
     jobs:
-      - name: build-sample-app
+      - name: build-sample-app-aws-ecs-fargate
         description: Build sample app image
         packages:
           - git
