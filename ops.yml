@@ -1,13 +1,12 @@
 version: '2'
 pipelines:
-  - name: sample-app-aws-ecs-fargate:0.1.1
+  - name: sample-app-aws-ecs-fargate:0.1.2
     description: build sample application
     env:
       static:
         - AWS_REGION=us-west-1
         - DOCKER_REGISTRY=ghcr.io
         - ORG=workflows-sh
-        - REF=CUSTOM
         - REPO=sample-expressjs-aws-ecs-fargate
         - STACK_TYPE=aws-ecs-fargate
       secrets:
