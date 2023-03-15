@@ -17,6 +17,8 @@ pipelines:
     events:
       - 'github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.opened'
       - 'github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.reopened'
+      - 'github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.synchronize'
+      - 'github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.merged'
     jobs:
       - name: build-sample-app-aws-ecs-fargate
         description: Build sample app image
