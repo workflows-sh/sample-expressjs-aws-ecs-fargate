@@ -1,27 +1,25 @@
-version: "2"
+version: '2'
 pipelines:
-  - name: build-sample-expressjs-app:0.4.4
-    description: build sample expressjs application
+  - name: build-sample-app:0.4.4
+    description: build sample application
     env:
       static:
         - DOCKER_REGISTRY=ghcr.io
-        - GITHUB_ORG=biagotaski
-        - GITHUB_REPO=sample-app
+        - ORG=workflows-sh
+        - REPO=sample-expressjs-aws-ecs-fargate
+        - REF=CUSTOM
+        - AWS_REGION=us-west-1
       secrets:
-      - DOCKER_REGISTRY_USER
-      - DOCKER_REGISTRY_PASS
-      - GH_USERNAME
-      - GH_TOKEN
+        - GITHUB_TOKEN
+        - AWS_ACCESS_KEY_ID
+        - AWS_SECRET_ACCESS_KEY
+        - AWS_ACCOUNT_NUMBER
     events:
-      - "github:biagotaski/sample-app:pull_request.opened"
-      - "github:github_org/github_repo:pull_request.reopened"
-    trigger:
-     - build
-     - start
-     - publish
+      - 'github:workflows-sh/sample-app:pull_request.opened'
+      - 'github:workflows-sh/sample-app:pull_request.reopened'
     jobs:
       - name: build-sample-app
-        description: pipeline to build the sample-app
+        description: Build sample app image
         packages:
           - git
           - unzip
@@ -34,31 +32,14 @@ pipelines:
           - unzip awscli-bundle.zip && ./awscli-bundle/install -b ~/bin/aws
           - export PATH=~/bin:$PATH
           - aws --version
-          # - git clone https://oauth2:$GH_TOKEN@github.com/$ORG/$REPO
-          - git clone https://$GH_USERNAME:$GH_TOKEN@github.com/$GITHUB_ORG/$GITHUB_REPO && cd $GITHUB_REPO
-          # - cd $REPO && ls -asl #only remote
-          # - RAW_BRANCH_LIST=`git branch -r --sort=-committerdate | grep -v HEAD | head -n 20 | sed 's:.*/::' | awk '{print}' ORS="' '"` #only remote
-          # - echo "ux prompt list '$RAW_BRANCH_LIST$REF' --message='Select the repository branch to build' --name='reference'" >> /tmp/ux.sh && chmod 755 /tmp/ux.sh  #only remote
-          # - if [ "${REF}" = "CUSTOM"  ]; then REF=`/tmp/ux.sh`; fi #only remote
-          # - if [ "${REF}" = "CUSTOM" ]; then REF=`ux prompt input --message='Enter the repository branch to build' --name='reference'`; fi && echo "Going to checkout $REF" #only remote
-          # - git fetch && git checkout $REF #only remote
-          # - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE
-          - echo $DOCKER_REGISTRY | docker login -u $DOCKER_REGISTRY_USER --password-stdin $DOCKER_REGISTRY
-          - docker build -t $DOCKER_REGISTRY/$GITHUB_ORG/$GITHUB_REPO:latest .
-          - docker push $DOCKER_REGISTRY/$GITHUB_ORG/$GITHUB_REPO:latest
-services:
-  - name: sample-expressjs-app:0.1.1
-    description: A sample expressjs service
-    run: node /ops/index.js
-    port: [ '8080:8080' ]
-    domain: ""
-    env:
-      static:
-        - PORT=8080
-    events:
-      - "github:biagotaski/sample-app:pull_request.merged"
-      - "github:biagotaski/sample-app:pull_request.closed"
-    trigger:
-     - build
-     - start
-     - publish
+          - git clone https://oauth2:$GITHUB_TOKEN@github.com/$ORG/$REPO
+          - cd $REPO && ls -asl #only remote
+          - RAW_BRANCH_LIST=`git branch -r --sort=-committerdate | grep -v HEAD | head -n 20 | sed 's:.*/::' | awk '{print}' ORS="' '"` #only remote
+          - echo "ux prompt list '$RAW_BRANCH_LIST$REF' --message='Select the repository branch to build' --name='reference'" >> /tmp/ux.sh && chmod 755 /tmp/ux.sh #only remote
+          - if [ "${REF}" = "CUSTOM"  ]; then REF=`/tmp/ux.sh`; fi #only remote
+          - if [ "${REF}" = "CUSTOM" ]; then REF=`ux prompt input --message='Enter the repository branch to build' --name='reference'`; fi && echo "Going to checkout $REF" #only remote
+          - git fetch && git checkout $REF #only remote
+          - cd sample-app && ls -asl #only locally
+          - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE
+          - docker build -t $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF .
+          - docker push $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF
