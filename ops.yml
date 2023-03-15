@@ -5,6 +5,7 @@ pipelines:
     env:
       static:
         - DOCKER_REGISTRY=ghcr.io
+        - STACK_TYPE=aws-ecs-fargate
         - ORG=workflows-sh
         - REPO=sample-expressjs-aws-ecs-fargate
         - REF=CUSTOM
@@ -15,8 +16,8 @@ pipelines:
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
     events:
-      - 'github:workflows-sh/sample-app:pull_request.opened'
-      - 'github:workflows-sh/sample-app:pull_request.reopened'
+      - 'github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.opened'
+      - 'github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.reopened'
     jobs:
       - name: build-sample-app
         description: Build sample app image
@@ -39,7 +40,7 @@ pipelines:
           - if [ "${REF}" = "CUSTOM"  ]; then REF=`/tmp/ux.sh`; fi #only remote
           - if [ "${REF}" = "CUSTOM" ]; then REF=`ux prompt input --message='Enter the repository branch to build' --name='reference'`; fi && echo "Going to checkout $REF" #only remote
           - git fetch && git checkout $REF #only remote
-          - cd sample-app && ls -asl #only locally
+          - ls -asl #only locally
           - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE
           - docker build -t $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF .
           - docker push $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF
