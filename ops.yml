@@ -1,6 +1,6 @@
 version: "1"
 pipelines:
-  - name: sample-expressjs-pipeline-aws-ecs-fargate:0.1.0
+  - name: sample-expressjs-pipeline-aws-ecs-fargate:0.1.1
     description: build a release for deployment
     env:
       static:
@@ -9,7 +9,6 @@ pipelines:
         - REPO=sample-expressjs-aws-ecs-fargate
         - AWS_REGION=us-west-1
         - STACK_TYPE=aws-ecs-fargate
-        - REF=main
       secrets:
         - GITHUB_TOKEN
         - AWS_ACCESS_KEY_ID
