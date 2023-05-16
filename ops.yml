@@ -1,53 +1,44 @@
-version: "2"
+version: "1"
 pipelines:
-  - name: build-sample-expressjs-app:0.4.4
-    description: build sample expressjs application
+  - name: sample-expressjs-pipeline-aws-ecs-fargate:0.1.0
+    description: build a release for deployment
     env:
       static:
-        - DOCKER_REGISTRY=ghcr.io
-        - GITHUB_ORG=biagotaski
-        - GITHUB_REPO=sample-app
+        - DEBIAN_FRONTEND=noninteractive
+        - ORG=workflows-sh
+        - REPO=sample-expressjs-aws-ecs-fargate
+        - AWS_REGION=us-west-1
+        - STACK_TYPE=aws-ecs-fargate
+        - REF=main
       secrets:
-      - DOCKER_REGISTRY_USER
-      - DOCKER_REGISTRY_PASS
-      - GH_USERNAME
-      - GH_TOKEN
+        - GITHUB_TOKEN
+        - AWS_ACCESS_KEY_ID
+        - AWS_SECRET_ACCESS_KEY
+        - AWS_ACCOUNT_NUMBER
     events:
-      - "github:biagotaski/sample-app:pull_request.opened"
-      - "github:github_org/github_repo:pull_request.reopened"
-    trigger:
-     - build
-     - start
-     - publish
+      - "github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.merged"
+      - "github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.opened"
+      - "github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.synchronize"
     jobs:
-      - name: build-sample-app
-        description: pipeline to build the sample-app
+      - name: sample-expressjs-build-job-aws-ecs-fargate
+        description: sample-expressjs build step
         packages:
           - git
           - unzip
           - python
-          - wget
-          - tar
         steps:
-          - set +u
           - curl https://s3.amazonaws.com/aws-cli/awscli-bundle-1.18.200.zip -o awscli-bundle.zip
           - unzip awscli-bundle.zip && ./awscli-bundle/install -b ~/bin/aws
           - export PATH=~/bin:$PATH
           - aws --version
-          # - git clone https://oauth2:$GH_TOKEN@github.com/$ORG/$REPO
-          - git clone https://$GH_USERNAME:$GH_TOKEN@github.com/$GITHUB_ORG/$GITHUB_REPO && cd $GITHUB_REPO
-          # - cd $REPO && ls -asl #only remote
-          # - RAW_BRANCH_LIST=`git branch -r --sort=-committerdate | grep -v HEAD | head -n 20 | sed 's:.*/::' | awk '{print}' ORS="' '"` #only remote
-          # - echo "ux prompt list '$RAW_BRANCH_LIST$REF' --message='Select the repository branch to build' --name='reference'" >> /tmp/ux.sh && chmod 755 /tmp/ux.sh  #only remote
-          # - if [ "${REF}" = "CUSTOM"  ]; then REF=`/tmp/ux.sh`; fi #only remote
-          # - if [ "${REF}" = "CUSTOM" ]; then REF=`ux prompt input --message='Enter the repository branch to build' --name='reference'`; fi && echo "Going to checkout $REF" #only remote
-          # - git fetch && git checkout $REF #only remote
-          # - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE
-          - echo $DOCKER_REGISTRY | docker login -u $DOCKER_REGISTRY_USER --password-stdin $DOCKER_REGISTRY
-          - docker build -t $DOCKER_REGISTRY/$GITHUB_ORG/$GITHUB_REPO:latest .
-          - docker push $DOCKER_REGISTRY/$GITHUB_ORG/$GITHUB_REPO:latest
+          - git clone https://$GITHUB_TOKEN:x-oauth-basic@github.com/$ORG/$REPO
+          - cd $REPO && ls -asl
+          - git fetch && git checkout $REF
+          - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO
+          - docker build -f Dockerfile -t $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF .
+          - docker push $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF
 services:
-  - name: sample-expressjs-app:0.1.1
+  - name: sample-expressjs-service-aws-ecs-fargate:0.1.0
     description: A sample expressjs service
     run: node /ops/index.js
     port: [ '8080:8080' ]
@@ -56,9 +47,9 @@ services:
       static:
         - PORT=8080
     events:
-      - "github:biagotaski/sample-app:pull_request.merged"
-      - "github:biagotaski/sample-app:pull_request.closed"
+      - "github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.merged"
+      - "github:workflows-sh/sample-expressjs-aws-ecs-fargate:pull_request.opened"
     trigger:
      - build
-     - start
      - publish
+     - start
